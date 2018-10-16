@@ -4,7 +4,7 @@ __global__ void multiply_gpu_tiling(double *a, double *b, double *c) {
   __shared__ double a_tile[TILE_DIM * TILE_DIM];
   __shared__ double b_tile[TILE_DIM * TILE_DIM];
 
-  int n_tiles = N / TILE_DIM;
+  int n_tiles = (int)ceil((float)N / (float)TILE_DIM);
 
   int tile_row = blockIdx.x;
   int tile_col = blockIdx.y;
@@ -15,10 +15,19 @@ __global__ void multiply_gpu_tiling(double *a, double *b, double *c) {
   double result = 0;
 
   for (int i = 0; i < n_tiles; i++) {
-    a_tile[num_row * TILE_DIM + num_col] =
-        a[tile_row * N * TILE_DIM + i * TILE_DIM + N * num_row + num_col];
-    b_tile[num_row * TILE_DIM + num_col] =
-        b[tile_col * TILE_DIM + i * N * TILE_DIM + N * num_col + num_row];
+    if (i * TILE_DIM + num_col < N) {
+      a_tile[num_row * TILE_DIM + num_col] =
+          a[tile_row * N * TILE_DIM + i * TILE_DIM + N * num_row + num_col];
+    } else {
+      a_tile[num_row * TILE_DIM + num_col] = 0;
+    }
+
+    if (i * TILE_DIM + num_row < N) {
+      b_tile[num_row * TILE_DIM + num_col] =
+          b[tile_col * TILE_DIM + i * N * TILE_DIM + N * num_col + num_row];
+    } else {
+      b_tile[num_row * TILE_DIM + num_col] = 0;
+    }
 
     __syncthreads();
 
