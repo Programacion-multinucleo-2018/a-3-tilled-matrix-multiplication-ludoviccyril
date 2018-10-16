@@ -15,14 +15,14 @@ __global__ void multiply_gpu_tiling(double *a, double *b, double *c) {
   double result = 0;
 
   for (int i = 0; i < n_tiles; i++) {
-    if (i * TILE_DIM + num_col < N) {
+    if (i * TILE_DIM + num_col < N && tile_row * TILE_DIM + num_row < N) {
       a_tile[num_row * TILE_DIM + num_col] =
           a[tile_row * N * TILE_DIM + i * TILE_DIM + N * num_row + num_col];
     } else {
       a_tile[num_row * TILE_DIM + num_col] = 0;
     }
 
-    if (i * TILE_DIM + num_row < N) {
+    if (i * TILE_DIM + num_col < N && tile_col * TILE_DIM + num_row < N) {
       b_tile[num_row * TILE_DIM + num_col] =
           b[tile_col * TILE_DIM + i * N * TILE_DIM + N * num_col + num_row];
     } else {
@@ -38,8 +38,10 @@ __global__ void multiply_gpu_tiling(double *a, double *b, double *c) {
     __syncthreads();
   }
 
-  c[tile_row * TILE_DIM * N + tile_col * TILE_DIM + num_col + num_row * N] =
-      result;
+  if (tile_col * TILE_DIM + num_col < N && tile_row * TILE_DIM + num_row < N) {
+    c[tile_row * TILE_DIM * N + tile_col * TILE_DIM + num_col + num_row * N] =
+        result;
+  }
 }
 
 __global__ void multiply_gpu(double *a, double *b, double *c) {
@@ -169,9 +171,9 @@ int main(int argc, char *argv[]) {
 
   // print results
 
-  chrono::duration<double, std::milli> duration_gpu_tile =
+  chrono::duration<float, std::milli> duration_gpu_tile =
       end_gpu_tile - start_gpu_tile;
-  chrono::duration<double, std::milli> duration_gpu = end_gpu - start_gpu;
+  chrono::duration<float, std::milli> duration_gpu = end_gpu - start_gpu;
 
   cout << "WITH TILING: " << duration_gpu_tile.count() << "ms" << endl;
   cout << "WITHOUT TILING: " << duration_gpu.count() << "ms" << endl;
