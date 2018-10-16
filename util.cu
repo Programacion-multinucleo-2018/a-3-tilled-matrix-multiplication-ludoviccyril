@@ -9,16 +9,16 @@ void safely_call(cudaError err, const char *msg, const char *file_name,
   }
 }
 
-void fill_matrix(float *m) {
+void fill_matrix(double *m) {
   for (int i = 0; i < N * N; i++) {
-    m[i] = (float)rand() * 9 / RAND_MAX + 1;
+    m[i] = (double)rand() * 9 / RAND_MAX + 1;
   }
 }
 
-void check_result(float *a, float *b) {
+void check_result(double *a, double *b) {
   int are_identical = 1;
   for (int i = 0; i < N * N; i++) {
-    if (abs(a[i] - b[i]) > 1.0E-2) {
+    if (abs(a[i] - b[i]) > 1.0) {
       are_identical = 0;
       cout << i << ": " << a[i] << " / " << b[i] << endl;
       break;
@@ -31,7 +31,7 @@ void check_result(float *a, float *b) {
   }
 }
 
-void multiply_cpu(float *a, float *b, float *c) {
+void multiply_cpu(double *a, double *b, double *c) {
   for (int i = 0; i < N; i++) {
     for (int j = 0; j < N; j++) {
       c[j * N + i] = 0;
